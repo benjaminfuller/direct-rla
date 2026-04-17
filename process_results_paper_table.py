@@ -1,6 +1,6 @@
 import csv
 
-# Fixed Minerva values (from your original table)
+# These were directly pulled from Minerva approximation but can be replaced as needed
 MINERVA = {0.03: 9844, 0.025: 14176, 0.02: 22152, 0.015: 39384, 0.01: 88619, 0.0075: 157547, 0.005: 354486}
 
 mu_list = [.03, .025, .02, .015, .01, .0075, .005]
