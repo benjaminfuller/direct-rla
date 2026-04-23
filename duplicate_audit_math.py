@@ -1,4 +1,3 @@
-
 from math import log, ceil
 import numpy as np
 import sys
@@ -89,8 +88,8 @@ def lookup_comparison_size(alpha_2, mu_2):
         return None
     best = None
     for a, m, s in size_items:
-        # if a <= alpha_2 and m <= mu_2 and abs(a-alpha_2)<= .01 and abs(m-mu_2) <= .01:
-        if a <= alpha_2 and m <= mu_2:
+        if a <= alpha_2 and m <= mu_2 and m >  .02 or (abs(a-alpha_2)<= .002 and abs(m-mu_2) <= .001):
+        # if a <= alpha_2 and m <= mu_2:
             if best is None or s < best:
                 best = s
     if best is None:
@@ -203,7 +202,7 @@ def run_simulation(output_csv, N, mode):
 
     N_eff = int(N * (1 + inaccConstant))
     max_k = int(min(1000000, N))
-    k_candidates = np.arange(1000, max_k, 1000)
+    k_candidates = np.concatenate([np.arange(100, 1000, 50), np.arange(1000, max_k, 1000)])
 
     if mode in  ['direct']:
         print("Building duplicate set...")
@@ -241,8 +240,8 @@ def run_simulation(output_csv, N, mode):
                     alpha_var_range = [0]
                     mu_var_range = [0]
                 else:
-                    alpha_var_range = np.arange(0.05, 1, 0.05)
-                    mu_var_range = np.arange(0.1, .6, 0.1)
+                    alpha_var_range = np.arange(0.05, 1, 0.025)
+                    mu_var_range = np.arange(0.05, .6, 0.025)
                 
                 for alpha_var in alpha_var_range:
                     for mu_var in mu_var_range:
