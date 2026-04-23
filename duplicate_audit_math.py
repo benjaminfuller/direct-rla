@@ -88,7 +88,7 @@ def lookup_comparison_size(alpha_2, mu_2):
         return None
     best = None
     for a, m, s in size_items:
-        if a <= alpha_2 and m <= mu_2 and m >  .02 or (abs(a-alpha_2)<= .002 and abs(m-mu_2) <= .001):
+        if a <= alpha_2 and m <= mu_2 and (m >  .02 or (abs(a-alpha_2)<= .002 and abs(m-mu_2) <= .001)):
         # if a <= alpha_2 and m <= mu_2:
             if best is None or s < best:
                 best = s
