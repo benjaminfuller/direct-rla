@@ -1,4 +1,4 @@
-from math import log, ceil
+from math import log, ceil, sqrt
 import numpy as np
 import sys
 from scipy.stats import hypergeom
@@ -11,10 +11,6 @@ from Minerva_Sample_size import round_size_approx
 average_batch_size = 900
 inaccConstant = .10
 inaccConstantSmall = .001
-o1rate = .001
-u1rate = .001
-o2rate = .0001
-u2rate = .0001
 gamma = 1.1
 num_trials = 1000
 
@@ -276,6 +272,11 @@ def run_simulation(output_csv, N, mode):
                                     + (1 + inaccConstantSmall) * p_size * inaccConstant
                                       / (1 + inaccConstant * p_size)
                                 )
+
+                                epsilon_p = (1-p)*inaccConstantSmall + p*inaccConstant
+                                eta = (1+inaccConstant)*(1+epsilon_p)-1
+                                if eta > sqrt(2)-1:
+                                    continue
 
                                 if mode == 'polling':
                                     mu = mu_original - tau - 2 * total_variation
