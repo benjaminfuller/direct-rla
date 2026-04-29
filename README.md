@@ -7,9 +7,9 @@ This repository generates samples size calculations for ballot comparison audits
 For a mode in direct, comparison, polling you want to run the following three commands
 
 
-1. ./dup_for_diff_sizes.sh <mode>
-2. python3 combine_results.py <mode>
-3. python3 process_duplicate_results.py <mode>
+1. ./dup_for_diff_sizes.sh \<mode\>
+2. python3 combine_results.py \<mode\>
+3. python3 process_duplicate_results.py \<mode\>
 
 This results in three main files:
 
