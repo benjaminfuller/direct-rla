@@ -13,7 +13,7 @@ For a mode in direct, comparison, polling you want to run the following three co
 
 This results in three main files:
 
-1. results_combined_<mode>.csv the believed best solutions across a variety of parameters
-2. time_results_by_size<mode>.csv the time savings across sizes for a statistically accurate manifest in comparison to the same method with a full manifest.
-3. time_results_by_size<mode>.png a graph of the time savings across sizes for a statistically accurate manifest in comparison to the same method with a full manifest.
+1. results_combined_\<mode\>.csv the believed best solutions across a variety of parameters
+2. time_results_by_size\<mode\>.csv the time savings across sizes for a statistically accurate manifest in comparison to the same method with a full manifest.
+3. time_results_by_size\<mode\>.png a graph of the time savings across sizes for a statistically accurate manifest in comparison to the same method with a full manifest.
 
