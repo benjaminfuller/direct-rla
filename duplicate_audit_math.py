@@ -149,6 +149,9 @@ def compute_fisher_risk(N, d, t, claws):
     alpha_tmp = (1 - d*L)/(N-d)
     omega = L/alpha_tmp
     pmf = fisher.pmf(np.arange(t+1), N, d, t, omega)
+    if alpha_tmp >  1+inaccConstant/N:
+        print(inaccConstant, alpha_tmp, N, 1+inaccConstant/N, flush=True)
+        return 1
     return np.sum(pmf*claws[d][:t+1])
 
 
