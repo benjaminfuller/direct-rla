@@ -10,5 +10,5 @@ PLAIN_COMPARISON=$1
 
 for N in "${N_list[@]}"; do
     echo "Running duplicate audit for N=$N"
-    python3 Inverse-Paper-Simulation/duplicate_audit_math.py "$N" "$PLAIN_COMPARISON"
+    python3 duplicate_audit_math.py "$N" "$PLAIN_COMPARISON"
 done
