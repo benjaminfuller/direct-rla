@@ -143,13 +143,13 @@ def compute_hypergeom_risk(N, d, t, claws):
     pmf = hypergeom.pmf(np.arange(t + 1), N, d, t)
     return np.sum(pmf * claws[d][:t+1])
 
-def compute_fisher_risk(N, d, t, claws):
+def compute_fisher_risk(N, d, t, claws, eta):
     total = 0.0
-    L = 1/(N*(1+inaccConstant))
+    L = 1/(N*(1+eta))
     alpha_tmp = (1 - d*L)/(N-d)
     omega = L/alpha_tmp
     pmf = fisher.pmf(np.arange(t+1), N, d, t, omega)
-    if alpha_tmp >  1+inaccConstant/N:
+    if alpha_tmp >  (1+eta)/N:
         print(inaccConstant, alpha_tmp, N, 1+inaccConstant/N, flush=True)
         return 1
     return np.sum(pmf*claws[d][:t+1])
@@ -158,7 +158,7 @@ def compute_fisher_risk(N, d, t, claws):
 
 # ===================== SEARCH =====================
 
-def find_k_from_risk(N, N_eff, duplicates, claws, risk_array, alpha, k_candidates, is_fisher=False):
+def find_k_from_risk(N, N_eff, duplicates, claws, risk_array, alpha, k_candidates, eta=0, is_fisher=False):
     lo, hi = 0, len(k_candidates) - 1
     best_k = None
     
@@ -176,7 +176,7 @@ def find_k_from_risk(N, N_eff, duplicates, claws, risk_array, alpha, k_candidate
                 arr = claws[duplicates]
 
             if is_fisher:
-                risk_array[N_eff, duplicates, k] = compute_fisher_risk(N_eff, duplicates, k, claws)
+                risk_array[N_eff, duplicates, k] = compute_fisher_risk(N_eff, duplicates, k, claws, eta)
             else:
                 risk_array[N_eff, duplicates, k] = compute_hypergeom_risk(N_eff, duplicates, k, claws)
 
@@ -312,7 +312,7 @@ def run_simulation(output_csv, N, mode):
                             if mode == 'direct':
                                 duplicates = int(2 * mu_1 * N_eff)
                                 if INACCURATE_MANIFEST and k_3 < N:
-                                    k_1 = find_k_from_risk(N, N_eff, duplicates,claws,fisher_risks,alpha_1,k_candidates, is_fisher=True)
+                                    k_1 = find_k_from_risk(N, N_eff, duplicates,claws,fisher_risks,alpha_1,k_candidates, eta = eta, is_fisher=True)
                                 else:
                                     k_1 = find_k_from_risk(N, N_eff, duplicates,claws,hyper_risks,alpha_1,k_candidates, is_fisher=False)
             
