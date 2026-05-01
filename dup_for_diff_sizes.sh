@@ -12,3 +12,6 @@ for N in "${N_list[@]}"; do
     echo "Running duplicate audit for N=$N"
     python3 duplicate_audit_math.py "$N" "$PLAIN_COMPARISON"
 done
+
+python3 combine_results.py "$PLAIN_COMPARISON"
+python3 process_duplicate_results.py "$PLAIN_COMPARISON"

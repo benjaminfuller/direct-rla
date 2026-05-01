@@ -276,16 +276,20 @@ def run_simulation(output_csv, N, mode):
                                       / (1 + inaccConstant * p_size)
                                 )
 
-                                epsilon_p = (1-p)*inaccConstantSmall + p*inaccConstant
+                                epsilon_p = (1-p_size)*inaccConstantSmall + p_size*inaccConstant
                                 eta = (1+inaccConstant)*(1+epsilon_p)-1
                                 if eta > sqrt(2)-1:
                                     continue
 
                                 if mode == 'polling':
                                     mu = mu_original - tau - 2 * total_variation
-                                else:
+                                    mu_3 = mu_original - tau - 2 * total_variation
+                                elif mode == 'direct':
                                     mu = mu_original - tau - 4 * total_variation
-
+                                    mu_3 = mu_original - tau - 4 * total_variation
+                                else:
+                                    mu = mu_original - epsilon_p
+                                    mu_3 = epsilon_p
                                 k_3 = ceil(-(1 + inaccConstantSmall) * log(alpha_3) / p_size)
 
                                 if k_3 < 0:
@@ -326,7 +330,7 @@ def run_simulation(output_csv, N, mode):
                             alpha_2 = round(alpha * (1 - alpha_var), 7)
                             mu_2 = round(mu * (1 - 2*mu_var), 7)
 
-                            if INACCURATE_MANIFEST:
+                            if INACCURATE_MANIFEST and mode in ['polling', 'direct']:
                                 mu_2 *= (1 + tau)
                                 mu_2 = round(mu_2, 7)
 

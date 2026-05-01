@@ -53,6 +53,7 @@ with open("all_time.csv", "w", newline='') as dupfile:
                 # OverallTime['comp_time'] = round(comp_samples[margin]*(45+25)/3600+size/1538)
                 # if size%1000 != 0:
                 time_results[(size, margin)] = OverallTime['dup_time']/OverallTime['inacc_time']
+                print(size, margin, OverallTime['dup_time'], OverallTime['inacc_time'])
                 if time_results[(size, margin)] < 1:
                     print(f"Warning: Duplication time is less than inaccuracy time for size {size} and margin {margin}. Ratio: {time_results[(size, margin)]}")
                 # writer.writerow([size, margin, OverallTime['dup_time'], OverallTime['inacc_time'], OverallTime['poll_time'], OverallTime['comp_time']])
