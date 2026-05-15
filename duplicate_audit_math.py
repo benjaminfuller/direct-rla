@@ -1,4 +1,4 @@
-from math import log, ceil, sqrt
+from math import log, ceil, sqrt, exp
 import numpy as np
 import sys
 from scipy.stats import hypergeom
@@ -19,6 +19,11 @@ size_per_risk = {}
 all_alpha = set()
 all_mu = set()
 size_items = []
+o1rate = .001
+u1rate = .001
+o2rate = .0001
+u2rate = .0001
+gamma = 1.1
 
 with open('ComparisonSizes.csv', 'r', newline='') as file:
     csv_reader = csv.reader(file)
@@ -37,41 +42,21 @@ with open('ComparisonSizes.csv', 'r', newline='') as file:
 
 size_items = [(a, m, s) for (a, m), s in size_per_risk.items()]
 
-o1rate = .001
-u1rate = .001
-o2rate = .0001
-u2rate = .0001
-gamma = 1.1
-
 def compute_kaplan_markov_size(alpha, mu):
     outcomes = np.array([-2, -1, 0, 1, 2])
     probabilities = np.array([u2rate, u1rate, 1 - o1rate - o2rate - u1rate - u2rate, o1rate, o2rate])
-    
-    
     base_factor = (1 - (mu / (2 * gamma)))
-    
     k = 0
     observedrisk = 1.0
-    
     while k <= 500000:
         samples = np.random.choice(outcomes, size=10000, p=probabilities)
-        
-        # Vectorized factor computation
         factors = base_factor / (1 - (samples / (2 * gamma)))
-        
-        # Cumulative product
         cumprod = np.cumprod(factors)
-        
-        # Find first index where condition is met
         below_alpha = np.where(observedrisk * cumprod < alpha)[0]
-        
         if below_alpha.size > 0:
             return k + below_alpha[0] + 1
-        
-        # Update state
         observedrisk *= cumprod[-1]
         k += len(samples)
-    
     return 2**32
 
 def run_sim_missing(alpha, mu):
@@ -104,85 +89,24 @@ def lookup_comparison_size(alpha_2, mu_2):
     return best
 
 # ===================== PRECOMPUTATION =====================
-
-def build_duplicates_set(mu_list, N_eff):
-    duplicates_set = set()
-    mu_var_array = np.arange(0.1, .6, 0.1)
-
-    for mu_original in mu_list:
-        for mu_var in mu_var_array:
-            mu_1 = mu_original * mu_var
-            d = int(2 * mu_1 * N_eff)
-            duplicates_set.add(d)
-
-    return sorted(duplicates_set)
-
-
-def precompute_claws_one_d(duplicate, max_k):
-    arr = np.zeros(max_k + 1)
-    arr[0] = 1.0
-    prod = 1.0
-    for t in range(1, max_k + 1):
-        if 2 * t > duplicate:
-            break
-        prod *= (duplicate - 2*(t-1)) / (duplicate - (t-1))
-        arr[t] = prod
-
-    return arr
-
-def precompute_claws(duplicates_values, max_k):
-    claws = {}
-    for d in duplicates_values:
-        arr = precompute_claws_one_d(d, max_k)  
-        claws[d] = arr
-    return claws
-
-
-
-def compute_hypergeom_risk(N, d, t, claws):
-    pmf = hypergeom.pmf(np.arange(t + 1), N, d, t)
-    return np.sum(pmf * claws[d][:t+1])
-
-def compute_fisher_risk(N, d, t, claws, eta):
-    total = 0.0
-    L = 1/(N*(1+eta))
-    alpha_tmp = (1 - d*L)/(N-d)
-    omega = L/alpha_tmp
-    pmf = fisher.pmf(np.arange(t+1), N, d, t, omega)
-    if alpha_tmp >  (1+eta)/N:
-        print(inaccConstant, alpha_tmp, N, 1+inaccConstant/N, flush=True)
-        return 1
-    return np.sum(pmf*claws[d][:t+1])
-
-
+def compute_duplicate_risk(N, d, t):
+    temp0 = -t/N
+    temp = exp(temp0)
+    temp2 = -d*(1-temp)**2
+    return 2*exp(temp2) 
 
 # ===================== SEARCH =====================
 
-def find_k_from_risk(N, N_eff, duplicates, claws, risk_array, alpha, k_candidates, eta=0, is_fisher=False):
+def find_k_from_risk(N, N_eff, duplicates, risk_array, alpha, k_candidates):
     lo, hi = 0, len(k_candidates) - 1
     best_k = None
-    
     max_k =  int(min(1000000, N)) 
     while lo <= hi:
         mid = (lo + hi) // 2
         k = int(k_candidates[mid])
-
         if (N_eff, duplicates, k)  not in risk_array:
-            # compute on demand (exact, same as precompute)
-            if duplicates not in claws:
-                arr = precompute_claws_one_d(duplicates, max_k)
-                claws[duplicates] = arr
-            else:
-                arr = claws[duplicates]
-
-            if is_fisher:
-                risk_array[N_eff, duplicates, k] = compute_fisher_risk(N_eff, duplicates, k, claws, eta)
-            else:
-                risk_array[N_eff, duplicates, k] = compute_hypergeom_risk(N_eff, duplicates, k, claws)
-
-        # print(compute_fisher_risk(N_eff, duplicates, k,claws), compute_hypergeom_risk(N_eff, duplicates, k, claws), flush=True)
+            risk_array[N_eff, duplicates, k] = compute_duplicate_risk(N_eff, duplicates, k)
         if risk_array[N_eff, duplicates, k] <= alpha:
-            # print(f"Found k={k} with risk {risk_array[N_eff, duplicates, k]} <= alpha {alpha}, for N={N}, duplicates={duplicates}, N_eff={N_eff}")
             best_k = k
             hi = mid - 1
         else:
@@ -201,17 +125,12 @@ def run_simulation(output_csv, N, mode):
 
     N_eff = int(N * (1 + inaccConstant))
     max_k = int(min(1000000, N))
-    k_candidates = np.concatenate([np.arange(100, 1000, 50), np.arange(1000, max_k, 1000)])
+    k_candidates = np.concatenate([np.arange(100, 1000, 50), np.arange(1000, max_k, 500)])
 
     if mode in  ['direct']:
-        print("Building duplicate set...")
-        duplicates_values = build_duplicates_set(mu_list, N_eff)
-        print("Duplicate values:", len(duplicates_values))
-        print("Precomputing claws...")
-        claws = precompute_claws(duplicates_values, max_k)
-
-        hyper_risks = {}
-        fisher_risks = {}
+        duplicates_values = list()
+        acc_risks = {}
+        inacc_risks = {}
 
 
     with open(output_csv, 'w', newline='') as out_file:
@@ -229,7 +148,7 @@ def run_simulation(output_csv, N, mode):
             for INACCURATE_MANIFEST in [False, True]:
 
                 if INACCURATE_MANIFEST:
-                    size_array = [.5, .45, .4, .35, .3, .25, .20, 0.20, 0.15, 0.12, 0.09, .06, .03, .01]
+                    size_array = np.arange(.95, .01, -.005)
                 else:
                     size_array = [0]
 
@@ -277,6 +196,7 @@ def run_simulation(output_csv, N, mode):
                                 )
 
                                 epsilon_p = (1-p_size)*inaccConstantSmall + p_size*inaccConstant
+                                N_eff = int(N*(1+epsilon_p))
                                 eta = (1+inaccConstant)*(1+epsilon_p)-1
                                 if eta > sqrt(2)-1:
                                     continue
@@ -314,11 +234,11 @@ def run_simulation(output_csv, N, mode):
                             alpha_1 = alpha * alpha_var
 
                             if mode == 'direct':
-                                duplicates = int(2 * mu_1 * N_eff)
+                                duplicates = int(mu_1 * N_eff)
                                 if INACCURATE_MANIFEST and k_3 < N:
-                                    k_1 = find_k_from_risk(N, N_eff, duplicates,claws,fisher_risks,alpha_1,k_candidates, eta = eta, is_fisher=True)
+                                    k_1 = find_k_from_risk(N, N_eff, duplicates,inacc_risks,alpha_1,k_candidates)
                                 else:
-                                    k_1 = find_k_from_risk(N, N_eff, duplicates,claws,hyper_risks,alpha_1,k_candidates, is_fisher=False)
+                                    k_1 = find_k_from_risk(N, N, duplicates,acc_risks,alpha_1,k_candidates)
             
 
                                 if k_1 is None:

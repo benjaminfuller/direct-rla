@@ -1,16 +1,16 @@
 import csv
 
 # Fixed Minerva values (from your original table)
-MINERVA = {0.03: 9844, 0.025: 14176, 0.02: 22152, 0.015: 39384, 0.01: 88619, 
-           .0095: 98193, .0090: 109407, 
-           .0085: 122657, .0080: 138469, 
-           0.0075: 157547, .0070: 180858,
-           .0060: 246170, 0.005: 354486,
-           .0040: 553886, .0030: 984689, 
-           .0020: 2215553}
+MINERVA = {0.03: 9844, 0.025: 14176, 0.02: 22152, 0.019: 24546, 0.018: 27349, 0.017: 30662, 0.016: 34615, 0.015: 39384, 
+           0.014: 45212, 0.013: 52436, 0.012: 61540, 0.011: 73238, 0.01: 88619, 0.009: 109407, 0.008: 138469, 
+           0.0075: 157547, 0.007: 180858, 0.006: 246170, 0.005: 354486, 0.004: 553886, 0.003: 984689, 0.002: 2215553}
 
-PER_BATCH = False # Set to True to scale values per batch, False to keep original values
-mu_list = [.01, .009, .008, .007, .006, .005, .004, .003, .002]
+PER_BATCH = True # Set to True to scale values per batch, False to keep original values
+PRINT_GRAPH = False
+if PRINT_GRAPH:
+    mu_list = [.005, .006, .007, .008, .009, .01, .011, .012, .013, .014, .015, .016, .017, .018, .019, .02]
+else:
+    mu_list = [.03, .025, .02, .015, .01, .0075, .005]
 def format_margin(mu):
     return round(mu * 100, 2)
 
@@ -42,8 +42,6 @@ def main():
 
                 a_dup = int(round(float(r["alpha1"]) /.05 * 100))
                 a_sam = int(round(float(r["alpha2"]) /.05 * 100))
-
-
                 rows.append((size, mu, k_dup, a_dup, k_sam, a_sam, minerva))
 
     rows.sort(key=lambda x: (x[0], x[1]))
@@ -55,13 +53,20 @@ def main():
                 print()  # Newline between different N values
             print(f"N={N} ", end='')
             N_temp = N
-        print(f"({format_margin(mu)},{int(k1)}) ", end='')
-        # print(
-        #     f"& {format_margin(mu):.2f} & "
-        #     f"{k1:.0f} & {a1} & "
-        #     f"{k2:.0f} & {a2} & {int(round(m,0))} \\\\ \\cline{{2-7}}"
-        # )
-    
+
+        if not PRINT_GRAPH:
+            print(
+                f"& {format_margin(mu):.2f} & "
+                f"{k1:.0f} & {a1} & "
+                f"{k2:.0f} & {a2} & {int(round(m,0))} \\\\ \\cline{{2-7}}"
+            )
+        else:
+            print(f"({format_margin(mu)},{int(k1)}) ", end='')
+    if PRINT_GRAPH:    
+        print("Minerva: ", end="")
+        for mu in sorted(mu_list):
+            print(f"({format_margin(mu)},{round(MINERVA.get(mu, '')/1000)}) ", end="")
+        print()
 
 if __name__ == "__main__":
     main()
